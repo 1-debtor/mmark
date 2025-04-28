@@ -14,6 +14,20 @@ document.addEventListener('DOMContentLoaded', () => {
         // 如果没有数据，可以加载示例数据
         loadSampleData();
     }
+
+    // 检查是否是本地开发环境，更新备份/同步按钮文本
+    if (typeof WebDAV !== 'undefined' && WebDAV.isLocalDevelopment()) {
+        const backupBtnText = document.getElementById('backup-btn-text');
+        const syncBtnText = document.getElementById('sync-btn-text');
+
+        if (backupBtnText) {
+            backupBtnText.textContent = '导出';
+        }
+
+        if (syncBtnText) {
+            syncBtnText.textContent = '导入';
+        }
+    }
 });
 
 // 加载示例数据
