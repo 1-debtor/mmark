@@ -1487,16 +1487,20 @@ const UI = {
 
     // 处理WebDAV备份
     async handleWebDAVBackup() {
-        // 检查是否已配置WebDAV
+        // 检查是否已配置WebDAV（本地开发环境不需要配置）
         const config = WebDAV.getConfig();
-        if (!config.url) {
+        if (!config.url && !WebDAV.isLocalDevelopment()) {
             this.showToast('请先配置WebDAV');
             this.openWebDAVConfigModal();
             return;
         }
 
         // 显示备份中消息
-        this.showToast('正在备份数据...');
+        if (WebDAV.isLocalDevelopment()) {
+            this.showToast('正在准备备份数据...');
+        } else {
+            this.showToast('正在备份数据到WebDAV...');
+        }
 
         // 执行备份
         const result = await WebDAV.backupData();
@@ -1507,16 +1511,20 @@ const UI = {
 
     // 处理WebDAV同步
     async handleWebDAVSync() {
-        // 检查是否已配置WebDAV
+        // 检查是否已配置WebDAV（本地开发环境不需要配置）
         const config = WebDAV.getConfig();
-        if (!config.url) {
+        if (!config.url && !WebDAV.isLocalDevelopment()) {
             this.showToast('请先配置WebDAV');
             this.openWebDAVConfigModal();
             return;
         }
 
         // 显示同步中消息
-        this.showToast('正在同步数据...');
+        if (WebDAV.isLocalDevelopment()) {
+            this.showToast('请选择备份文件...');
+        } else {
+            this.showToast('正在从WebDAV同步数据...');
+        }
 
         // 执行同步
         const result = await WebDAV.syncData();
