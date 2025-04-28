@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>资源导航系统</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <h1>资源导航系统</h1>
+            </div>
+            <div class="search-container">
+                <input type="text" id="search-input" placeholder="搜索资源...">
+                <button id="search-btn"><i class="bi bi-search"></i></button>
+            </div>
+            <div class="actions">
+                <button id="import-btn" class="btn primary"><i class="bi bi-upload"></i> 导入数据</button>
+                <button id="export-btn" class="btn secondary"><i class="bi bi-download"></i> 导出数据</button>
+                <button id="add-resource-btn" class="btn success"><i class="bi bi-plus-lg"></i> 添加资源</button>
+                <button id="clear-data-btn" class="btn danger"><i class="bi bi-trash"></i> 清空数据</button>
+            </div>
+        </header>
+
+        <main>
+            <!-- 移动端侧边栏遮罩层 -->
+            <div class="sidebar-overlay"></div>
+
+            <!-- 移动端侧边栏切换按钮 -->
+            <button class="mobile-sidebar-toggle" aria-label="打开侧边栏">
+                <i class="bi bi-list"></i>
+            </button>
+
+            <aside class="sidebar">
+                <button class="sidebar-close" aria-label="关闭侧边栏">
+                    <i class="bi bi-x-lg"></i>
+                </button>
+
+                <div class="sidebar-section">
+                    <h2>分类</h2>
+                    <ul id="category-list" class="filter-list">
+                        <li class="active" data-filter-type="category" data-filter-value="all">全部资源</li>
+                        <!-- 分类将通过JavaScript动态添加 -->
+                    </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <h2>等级</h2>
+                    <ul id="level-list" class="filter-list">
+                        <!-- 等级将通过JavaScript动态添加 -->
+                    </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <h2>标签</h2>
+                    <ul id="tag-list" class="filter-list">
+                        <!-- 标签将通过JavaScript动态添加 -->
+                    </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h2>我的分组</h2>
+                        <button id="add-group-btn" class="btn mini" title="创建新分组">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </div>
+                    <ul id="group-list" class="filter-list">
+                        <!-- 分组将通过JavaScript动态添加 -->
+                    </ul>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h2>笔记</h2>
+                        <button id="add-note-btn" class="btn mini" title="新建笔记">
+                            <i class="bi bi-plus-lg"></i>
+                        </button>
+                    </div>
+                    <div id="notes-list" class="notes-list">
+                        <!-- 笔记将通过JavaScript动态添加 -->
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="section-header">
+                        <h2>WebDAV</h2>
+                        <button id="webdav-config-btn" class="btn mini" title="配置WebDAV">
+                            <i class="bi bi-gear"></i>
+                        </button>
+                    </div>
+                    <div class="webdav-actions">
+                        <button id="webdav-backup-btn" class="btn mini">
+                            <i class="bi bi-cloud-upload"></i> 备份
+                        </button>
+                        <button id="webdav-sync-btn" class="btn mini">
+                            <i class="bi bi-cloud-download"></i> 同步
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <section class="content">
+                <div class="resource-count">
+                    <div>
+                        <span id="resource-count">0</span> 个资源
+                        <span id="active-filters-indicator" class="filter-indicator" style="display: none;">
+                            <i class="bi bi-funnel-fill"></i>
+                        </span>
+                    </div>
+                    <div class="resource-actions-container">
+                        <button id="batch-mode-btn" class="btn mini">
+                            <i class="bi bi-check2-square"></i> 批量操作
+                        </button>
+                        <button id="clear-all-filters-btn" class="btn mini" style="display: none;">
+                            <i class="bi bi-x-circle"></i> 清除筛选
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 批量操作工具栏 -->
+                <div id="batch-operations-toolbar" class="batch-operations-toolbar" style="display: none;">
+                    <div class="batch-selection-info">
+                        已选择 <span id="selected-count">0</span> 个资源
+                    </div>
+                    <div class="batch-operations">
+                        <button id="batch-delete-btn" class="btn mini danger">
+                            <i class="bi bi-trash"></i> 批量删除
+                        </button>
+                        <button id="batch-add-to-group-btn" class="btn mini">
+                            <i class="bi bi-folder-plus"></i> 批量分组
+                        </button>
+                        <button id="cancel-batch-mode-btn" class="btn mini cancel">
+                            <i class="bi bi-x"></i> 取消
+                        </button>
+                    </div>
+                </div>
+
+                <div id="active-filters-container" class="active-filters-container" style="display: none;">
+                    <div class="active-filters-list" id="active-filters-list"></div>
+                </div>
+                <div id="resources-container" class="resources-grid">
+                    <!-- 资源卡片将通过JavaScript动态添加 -->
+                </div>
+                <div class="pagination">
+                    <button id="prev-page" class="pagination-btn" disabled><i class="bi bi-chevron-left"></i> 上一页</button>
+                    <div class="page-info">
+                        <span id="current-page">1</span> / <span id="total-pages">1</span>
+                    </div>
+                    <button id="next-page" class="pagination-btn" disabled>下一页 <i class="bi bi-chevron-right"></i></button>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <span>LINUX DO</span>
+        </footer>
+    </div>
+
+    <!-- 模态框 - 导入数据 -->
+    <div id="import-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>导入数据</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="tabs">
+                    <button class="tab-btn active" data-tab="file">文件导入</button>
+                    <button class="tab-btn" data-tab="paste">粘贴导入</button>
+                </div>
+                <div class="tab-content active" id="file-tab">
+                    <input type="file" id="file-input" accept=".json">
+                    <p class="hint">选择JSON文件导入（支持单个资源对象、资源数组或每行一个资源对象）</p>
+                </div>
+                <div class="tab-content" id="paste-tab">
+                    <textarea id="json-input" placeholder="粘贴JSON数据..."></textarea>
+                    <p class="hint">粘贴JSON格式的资源数据（支持单个资源对象、资源数组或每行一个资源对象）</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="import-confirm-btn" class="btn primary">导入</button>
+                <button class="btn cancel close-modal">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 - 添加/编辑资源 -->
+    <div id="resource-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="resource-modal-title">添加资源</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="resource-form">
+                    <input type="hidden" id="resource-id">
+                    <div class="form-group">
+                        <label for="title">标题</label>
+                        <input type="text" id="title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="url">URL</label>
+                        <input type="url" id="url" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="category">分类</label>
+                        <input type="text" id="category" list="categories" required>
+                        <datalist id="categories">
+                            <!-- 分类选项将通过JavaScript动态添加 -->
+                        </datalist>
+                    </div>
+                    <div class="form-group">
+                        <label for="level">级别</label>
+                        <input type="text" id="level">
+                    </div>
+                    <div class="form-group">
+                        <label for="tags">标签 (用逗号分隔)</label>
+                        <input type="text" id="tags">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="save-resource-btn" class="btn primary">保存</button>
+                <button class="btn cancel close-modal">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 - 确认删除 -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>确认删除</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除这个资源吗？此操作无法撤销。</p>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-delete-btn" class="btn danger">删除</button>
+                <button class="btn cancel close-modal">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 - 确认清空数据 -->
+    <div id="clear-data-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>确认清空数据</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>确定要清空所有数据吗？此操作无法撤销。</p>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-clear-btn" class="btn danger">清空</button>
+                <button class="btn cancel close-modal">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 - 创建/编辑分组 -->
+    <div id="group-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="group-modal-title">创建分组</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="group-form">
+                    <input type="hidden" id="group-id">
+                    <div class="form-group">
+                        <label for="group-name">分组名称</label>
+                        <input type="text" id="group-name" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="save-group-btn" class="btn primary">保存</button>
+                <button class="btn cancel close-modal">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 - 添加到分组 -->
+    <div id="add-to-group-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>添加到分组</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="resource-to-group-id">
+                <div id="group-selection-container">
+                    <!-- 分组选择项将通过JavaScript动态添加 -->
+                </div>
+                <div class="form-group">
+                    <button id="create-new-group-btn" class="btn secondary">
+                        <i class="bi bi-plus-lg"></i> 创建新分组
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn cancel close-modal">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 - 批量添加到分组 -->
+    <div id="batch-add-to-group-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>批量添加到分组</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="resources-to-group-ids">
+                <div id="batch-group-selection-container">
+                    <!-- 分组选择项将通过JavaScript动态添加 -->
+                </div>
+                <div class="form-group">
+                    <button id="batch-create-new-group-btn" class="btn secondary">
+                        <i class="bi bi-plus-lg"></i> 创建新分组
+                    </button>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn cancel close-modal">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 - 批量删除确认 -->
+    <div id="batch-confirm-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>确认批量删除</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>确定要删除选中的 <span id="batch-delete-count">0</span> 个资源吗？此操作无法撤销。</p>
+            </div>
+            <div class="modal-footer">
+                <button id="confirm-batch-delete-btn" class="btn danger">删除</button>
+                <button class="btn cancel close-modal">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 - 新建/编辑笔记 -->
+    <div id="note-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="note-modal-title">新建笔记</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="note-form">
+                    <input type="hidden" id="note-id">
+                    <div class="form-group">
+                        <label for="note-title">标题</label>
+                        <input type="text" id="note-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="note-content">内容</label>
+                        <textarea id="note-content" rows="10"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="save-note-btn" class="btn primary">保存</button>
+                <button class="btn cancel close-modal">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 - 查看笔记 -->
+    <div id="note-view-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="note-view-title"></h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="note-view-date" id="note-view-date"></div>
+                <div class="note-view-content" id="note-view-content"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn cancel close-modal">关闭</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- 模态框 - WebDAV配置 -->
+    <div id="webdav-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>WebDAV</h2>
+                <span class="close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="webdav-form">
+                    <div class="form-group">
+                        <label for="webdav-url">WebDAV 地址</label>
+                        <input type="url" id="webdav-url" placeholder="https://example.com/webdav/">
+                    </div>
+                    <div class="form-group">
+                        <label for="webdav-username">WebDAV 用户名</label>
+                        <input type="text" id="webdav-username">
+                    </div>
+                    <div class="form-group">
+                        <label for="webdav-password">WebDAV 密码</label>
+                        <input type="password" id="webdav-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="webdav-path">WebDAV 路径</label>
+                        <input type="text" id="webdav-path" placeholder="可选，例如: backup/">
+                    </div>
+                    <div class="form-group">
+                        <button type="button" id="test-webdav-btn" class="btn secondary">测试连接</button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="save-webdav-btn" class="btn primary">保存</button>
+                <button class="btn cancel close-modal">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="db.js"></script>
+    <script src="webdav.js"></script>
+    <script src="ui.js"></script>
+    <script src="performance.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
